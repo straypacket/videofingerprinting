@@ -1,0 +1,31 @@
+ruby avisynthLuma.rb diff Amazing_Caves@720x540.mp4 debug > Tests\output4HD_diff_Amazing@720_15s_withLuma_test_final
+
+ruby avisynthLuma.rb avg Amazing_Caves@720x540.mp4 debug > Tests\output4HD_avg_Amazing@720_15s_withLuma_test_final
+
+ffmpeg.exe -i Discoverers_1080.wmv -vcodec libx264 -b 2000k -bt 2000k -s 360x290 -an -f mp4 Discoverers@360x290.mp4
+
+Monitor output of generated output files:
+watch -n 10 'for D in o ; do for I in 3 25 2 1 05 025 01 005 ; do echo -n `egrep mp4$ ~/d_clust_0.$I.2d.txt_2_$D | wc -l` ; echo -n " $D Thresh=0.$I : " ; echo -n $(( `grep Hit ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - (`grep mp4$ ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - 1) + (`grep No\ hits ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l`) )) ; echo -n " false positives in " ; echo -n $(( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` * 210)); echo -n " comparisons. FP rate of 0" ; echo \( `grep Hit ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - \( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - 1 \) + `grep No\ hits ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` \) / \(`grep mp4$ ~/d_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` \* 210 \) | bc -l; done ; done'
+
+Count false negatives:
+for I in ~/d_clust_0.*txt_2_o ; do echo $I ; grep No\ hits $I ; done
+
+Measure average run-times:
+for in 3 25 2 1 05 025 01 005 ; do echo -n "d_clust_0.$I.2d.txt_2_o: " ; grep seconds ~/d_clust_0.$I.2d.txt_2_o | awk -F" " {'a++; c+=$7; print c/a'} | tail -1 ; done
+
+Measure all for prelem and runtime tests
+echo ; for D in o ; do for I in 025 ; do echo -n `egrep mp4$ ~/d_clust_0.$I.2d.txt_2_p07_$D | wc -l` ; echo -n " $D Thresh=0.$I : " ; echo -n $(( `grep Hit ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` - (`grep mp4$ ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` - 1) + (`grep No\ hits ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l`) )) ; echo -n " false positives in " ; echo -n $(( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` * 210)); echo -n " comparisons. FP rate of 0" ; echo \( `grep Hit ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` - \( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` - 1 \) + `grep No\ hits ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` \) / \(`grep mp4$ ~/d_clust_0.$I.2d.txt_2_p07_$D | grep -v \@ | wc -l` \* 210 \) | bc -l; for F in ~/d_clust_0.$I*txt_2_p07_$D ; do echo -n "False negatives: " ; echo -n `grep No\ hits $F | wc -l`; done ; for F in ~/d_clust_0.$I*txt_2_p07_$D ; do echo ". Avg. runtime: `grep seconds $F | awk -F" " {'a++; c+=$7; print c/a'} | tail -1`" ; done ; done ; done
+
+echo ; for D in o ; do for I in 05 ; do echo -n `egrep mp4$ ~/d_clust_0.$I.2d.txt_2_p05_$D | wc -l` ; echo -n " $D Thresh=0.$I : " ; echo -n $(( `grep Hit ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` - (`grep mp4$ ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` - 1) + (`grep No\ hits ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l`) )) ; echo -n " false positives in " ; echo -n $(( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` * 210)); echo -n " comparisons. FP rate of 0" ; echo \( `grep Hit ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` - \( `grep mp4$ ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` - 1 \) + `grep No\ hits ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` \) / \(`grep mp4$ ~/d_clust_0.$I.2d.txt_2_p05_$D | grep -v \@ | wc -l` \* 210 \) | bc -l; for I in ~/d_clust_0.*txt_2_p05_$D ; do echo -n "False negatives: " ; echo -n `grep No\ hits $I | wc -l`; done ; for F in ~/d_clust_0.*txt_2_p05_$D ; do echo ". Avg. runtime: `grep seconds $F | awk -F" " {'a++; c+=$7; print c/a'} | tail -1`" ; done ; done ; done
+
+#One command to rule them all
+echo ; for D in p04_o ; do for I in 05 ; do echo -n `egrep mp4$ ~/f_clust_0.$I.2d.txt_2_$D | wc -l` ; echo -n " $D Thresh=0.$I : " ; echo -n $(( `grep Hit ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - (`grep mp4$ ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - 1) + (`grep No\ hits ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l`) )) ; echo -n " false positives in " ; echo -n $(( `grep mp4$ ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` * 210)); echo -n " comparisons. FP rate of 0" ; echo \( `grep Hit ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - \( `grep mp4$ ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` - 1 \) + `grep No\ hits ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` \) / \(`grep mp4$ ~/f_clust_0.$I.2d.txt_2_$D | grep -v \@ | wc -l` \* 210 \) | bc -l; for F in ~/f_clust_0.$I*txt_2_$D ; do echo -n "False negatives: " ; echo -n `grep No\ hits $F | wc -l`; done ; for F in ~/f_clust_0.$I*txt_2_$D ; do echo ". Avg. runtime: `grep seconds $F | awk -F" " {'a++; c+=$7; print c/a'} | tail -1`" ; done ; done ; done
+
+
+The simplest commands of them all, yet they were left alone ;)
+
+ruby /mnt/VideoFingerprinting/avisynthLuma_sqlite_new_fastsearch.rb avg Amazing_Caves@720x540.mp4 15 15 -linux -test 0.05 -sqlite -sqlite_import
+ruby /mnt/VideoFingerprinting/avisynthLuma_sqlite_new_fastsearch.rb avg Amazing_Caves@720x540.mp4 15 15 -linux -test 0.05 -sqlite
+for I in *mp4 ; do echo $I &>> ~/d_clust_0.025.2d.txt_2_p07_o ; ruby /mnt/VideoFingerprinting/avisynthLuma_sqlite_new_fastsearch.rb avg $I 15 15 -linux -test 0.025 -prelem 0.7 -sqlite &>> ~/d_clust_0.025.2d.txt_2_p07_o; done
+
+for I in *mp4 ; do echo $I &>> ~/d_clust_0.05.2d.txt_2_p05_o ; ruby /mnt/VideoFingerprinting/avisynthLuma_sqlite_new_fastsearch.rb avg $I 15 15 -linux -test 0.05 -prelem 0.5 -sqlite &>> ~/d_clust_0.05.2d.txt_2_p05_o; done
