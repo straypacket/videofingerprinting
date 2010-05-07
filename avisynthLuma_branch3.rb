@@ -1054,7 +1054,7 @@ videoArray.each do |video|
 		#We can use .uniq for smaller vectors, but difference is minimal
 		#We can still fully compare in the next step, if we use .uniq here
 		##
-		
+		 
 		#The first two cases should be the normal happenings; however, let's just 
 		#be sure nothing bad happens
 		if l3uniq
