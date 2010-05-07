@@ -1062,14 +1062,14 @@ videoArray.each do |video|
 				bound = searchSeqArrayLumaIni.uniq.size-1
 				tscore = tanimoto(searchSeqArrayLumaIni.uniq, mArray.uniq[0..bound])
 				
-				p "1"
+				#p "1"
 				
 				p searchSeqArrayLumaIni.uniq if debug
 				p mArray[0..bound].uniq if debug
 			elsif ( searchSeqArrayLumaIni.uniq.size == mArray.uniq.size )
 				tscore = tanimoto(searchSeqArrayLumaIni.uniq, mArray.uniq)
 				
-				p "2"
+				#p "2"
 				
 				p searchSeqArrayLumaIni.uniq if debug
 				p mArray.uniq if debug
