@@ -27,12 +27,15 @@ To run:
 
 int AvgFrame(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3 *handle, double fps);
 int AvgFrameCentral(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3 *handle, double fps);
+int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3 *handle, double fps, int *fullArray);
 int AvgFrameText(AVFrame *pFrameFoo, int width, int height, int iFrame, int key);
 int cgo(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3 *handle);
+int makeIndexes(int *shortArray, sqlite3 *handle, char *argv[], int threshold, int size, double fps);
 
 double prevY, prevU, prevV = 0.0;
 int split = -1;
 int split_second = 0;
+int threshold = 5;
 
 /*** 
 Mode of operation:
@@ -57,7 +60,7 @@ int main(int argc, char *argv[]) {
 		mode = 0;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral") == 0) {
+	if (strcmp(argv[1], "-sujimport") == 0) {
 		printf("Using SUJ Central with SQL\n");
 		mode = 4;
 	}
@@ -128,11 +131,15 @@ int main(int argc, char *argv[]) {
 
   // Create a handle for database connection, create a pointer to sqlite3
   sqlite3 *handle;
+  
+  //Full array init of size 5h@60fps (a.k.a large enough)
+  //TO FIX: use dynamic array
+  int *fullArray = (int*) calloc ( (1080000-1), sizeof (int));
 
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
   if (mode == 1) {
-	retval = sqlite3_open("/home/gsc/test_cgo_modelling_gray.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_cgo_modelling_rot3.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -140,7 +147,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 0) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_central.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -148,7 +155,7 @@ int main(int argc, char *argv[]) {
 	}
   }  
   else if (mode == 4) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_central.db",&handle);
+	retval = sqlite3_open("/Users/gsc/test_suj_branch3_import.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -259,7 +266,7 @@ int main(int argc, char *argv[]) {
 	  } else if (mode == 0 ) {
 		sprintf(table_query,"create table '%s' (s_end INTEGER, luma INTEGER, chromau INTEGER, chromav INTEGER);",argv[2]);
 	  } else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77) {
-		sprintf(table_query,"create table '%s' (s_end INTEGER, luma INTEGER);",argv[2]);
+		sprintf(table_query,"create table '%s' (s_end FLOAT, luma INTEGER);",argv[2]);
 	  }
 	  
 	  retval = sqlite3_exec(handle,table_query,0,0,0);
@@ -358,7 +365,7 @@ int main(int argc, char *argv[]) {
 	  char allmovies_query[150];
 	  memset(allmovies_query, 0, 150);
 	  fps = (double)pFormatCtx->streams[videoStream]->r_frame_rate.num/(double)pFormatCtx->streams[videoStream]->r_frame_rate.den;
-	  sprintf(allmovies_query, "insert into allmovies (name,fps) values ('%s',%f);", argv[2], fps);
+	  sprintf(allmovies_query, "insert into allmovies (name,fps) values ('%s',%d);", argv[2], (int)fps*100);
 	  retval = sqlite3_exec(handle,allmovies_query,0,0,0);
   }
   
@@ -391,7 +398,8 @@ int main(int argc, char *argv[]) {
 		else if (mode == 2)
 			retval = AvgFrameText(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, pFrame->key_frame);
 		else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77)
-			retval = AvgFrameCentral(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, argv, handle, fps);
+			//retval = AvgFrameCentral(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, argv, handle, fps);
+			retval = AvgFrameImport(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, argv, handle, fps, fullArray);
 		else {
 			printf("Please choose a mode!\n");
 		}
@@ -399,8 +407,13 @@ int main(int argc, char *argv[]) {
     }
   }
   
-  //printf("%s\n",allmovies_query);
-  //printf("fps %2.2f\n", (double)pFormatCtx->streams[videoStream]->r_frame_rate.num/(double)pFormatCtx->streams[videoStream]->r_frame_rate.den);
+  //Cut the large fullArray to the movie actual size
+  int *shortArray = (int*) calloc ( i, sizeof (int));
+  memcpy(shortArray, fullArray, i*sizeof(int));
+  free(fullArray);
+  
+  //Do magic
+  makeIndexes(shortArray, handle, argv, threshold, i, fps);
   
   // Free the packet that was allocated by av_read_frame
   av_free_packet(&packet);
@@ -420,6 +433,9 @@ int main(int argc, char *argv[]) {
   
   // Close DB handler
   sqlite3_close(handle);
+  
+  // Free full array
+  free(shortArray);
 
   return 0;
   
@@ -619,6 +635,56 @@ int AvgFrame(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[]
   return retval;
 }
 
+int AvgFrameText(AVFrame *pFrameFoo, int width, int height, int iFrame, int key) {
+  int y = 0;
+  int x = 0;
+  
+  int retval = 0;
+  
+  unsigned int luma = 0;
+  unsigned int chromaV = 0;
+  unsigned int chromaU = 0;
+  float avgChromaU = 0.0;
+  float avgLuma = 0.0;
+  float avgChromaV = 0.0;
+  
+  //scene splitting
+  int partH = height/3;
+  int partW = width/4;
+  //
+  partH = 0;
+  partW = 0;
+
+  for(y=partH; y<height-partH; y++){
+    //printf("Luma %d\n",y);
+    for (x=partW; x<width-partW; x++) {
+      luma += pFrameFoo->data[0][y*pFrameFoo->linesize[0] + x];
+    }
+  }
+
+  for(y=0; y<height/2; y++){
+    //printf("Chroma %d\n",y);
+    fflush(stdout);
+    for (x=0; x<width/2; x++) {
+      chromaU += pFrameFoo->data[2][y*pFrameFoo->linesize[2] + x];
+      chromaV += pFrameFoo->data[1][y*pFrameFoo->linesize[1] + x];
+    }
+  }
+
+  avgLuma = luma*1.0 / (height*width);
+  avgChromaU = chromaU*1.0 / (height*width);
+  avgChromaV = chromaV*1.0 / (height*width);
+  
+  printf("%d;time;%f;%f;%f;%f\n", iFrame, avgLuma, fabs(avgLuma-prevY), avgChromaU, avgChromaV);
+  //printf("%d;time;%f;%f;%d\n", iFrame, avgLuma, fabs(avgLuma-prevY),key);
+  
+  prevY = avgLuma;
+  prevU = avgChromaU;
+  prevV = avgChromaV;
+  
+  return retval;
+}
+
 int AvgFrameCentral(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3* handle, double fps) {
   int y = 0;
   int x = 0;
@@ -700,53 +766,81 @@ int AvgFrameCentral(AVFrame *pFrameFoo, int width, int height, int iFrame, char 
   return retval;
 }
 
-
-int AvgFrameText(AVFrame *pFrameFoo, int width, int height, int iFrame, int key) {
+int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *argv[], sqlite3* handle, double fps, int *fullArray) {
   int y = 0;
   int x = 0;
   
-  int retval = 0;
+  int M = 3;
+  int N = 3;
   
   unsigned int luma = 0;
-  unsigned int chromaV = 0;
-  unsigned int chromaU = 0;
-  float avgChromaU = 0.0;
   float avgLuma = 0.0;
-  float avgChromaV = 0.0;
   
-  //scene splitting
-  int partH = height/3;
-  int partW = width/4;
-  //
-  partH = 0;
-  partW = 0;
-
-  for(y=partH; y<height-partH; y++){
-    //printf("Luma %d\n",y);
-    for (x=partW; x<width-partW; x++) {
+  //printf("Averaging [%d][%d][%d][%d] of the original [0][0][%d][%d]\n", width/M, height/N,2*width/M ,2*height/N , width, height);
+  
+  for(y=height/N; y<2*height/N; y++)
+    for (x=width/M; x<2*width/M; x++)
       luma += pFrameFoo->data[0][y*pFrameFoo->linesize[0] + x];
-    }
-  }
-
-  for(y=0; y<height/2; y++){
-    //printf("Chroma %d\n",y);
-    fflush(stdout);
-    for (x=0; x<width/2; x++) {
-      chromaU += pFrameFoo->data[2][y*pFrameFoo->linesize[2] + x];
-      chromaV += pFrameFoo->data[1][y*pFrameFoo->linesize[1] + x];
-    }
-  }
-
-  avgLuma = luma*1.0 / (height*width);
-  avgChromaU = chromaU*1.0 / (height*width);
-  avgChromaV = chromaV*1.0 / (height*width);
   
-  printf("%d;time;%f;%f;%f;%f\n", iFrame, avgLuma, fabs(avgLuma-prevY), avgChromaU, avgChromaV);
-  //printf("%d;time;%f;%f;%d\n", iFrame, avgLuma, fabs(avgLuma-prevY),key);
+  avgLuma = luma*1.0 / ((height*width)/((N+M)/2));
+  
+  //Insert every frame into a bidimensional array
+  fullArray[iFrame] = (int)(avgLuma*100);
+  //printf("%d\n",(int)(avgLuma*100));
   
   prevY = avgLuma;
-  prevU = avgChromaU;
-  prevV = avgChromaV;
+  
+  return 0;
+};
+
+int makeIndexes(int *shortArray, sqlite3* handle, char *argv[], int threshold, int size, double fps) {
+
+  int aux = 0;
+  //float first = 0.0f;
+  //Up-down fix
+  int first = shortArray[0];
+  int avgLuma = 0;
+  int thresh = threshold * 100;
+  int retval = 0;
+  char insert_query[500];
+  int counter = 1;
+  
+  //For each frame of the movie
+  for (aux = 0 ; aux < size ; aux++) {
+	//printf("%d => %d\n", aux, shortArray[aux]);
+    avgLuma += shortArray[aux];
+	printf("avgL=%d frameL=%d counter=%d time=%f\n",avgLuma/counter, shortArray[aux], counter, aux/fps);
+	
+	//If the current value is above of below the threshold and if we're not at the first frame, make a new index
+	//if ( (shortArray[aux] < ((avgLuma/counter)-thresh) || shortArray[aux] > ((avgLuma/counter)+thresh)) ) {
+	//Up-down fix
+	if ( (shortArray[aux] < (first-thresh) || shortArray[aux] > (first+thresh)) ) {
+	  
+	  //Update the database
+      memset(insert_query, 0, 500);
+      sprintf(insert_query, "insert into '%s' values (%f,%d)",argv[2],aux/fps,first);
+      retval = sqlite3_exec(handle,insert_query,0,0,0);
+  
+      if (retval)
+	    printf("%s\n",sqlite3_errmsg(handle));
+		
+      //Update values for next index
+	  avgLuma = 0;
+      counter = 1;
+	  //first = aux/fps;
+	  //Up-down fix
+	  first = shortArray[aux+1];
+	}
+	else
+	  counter++;
+  }
+  // Last entry
+  memset(insert_query, 0, 500);
+  sprintf(insert_query, "insert into '%s' values (%f,%d)",argv[2],aux/fps,-1);
+  retval = sqlite3_exec(handle,insert_query,0,0,0);
+  
+  if (retval)
+	printf("%s\n",sqlite3_errmsg(handle));
   
   return retval;
 }
