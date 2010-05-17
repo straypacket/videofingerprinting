@@ -687,7 +687,7 @@ videoArray.each do |video|
 	##
 	#Now we search the big MOVIE to find our sequence
 
-	print("Seaching video:#{video}\n")  if debug_stats || debug
+	print("#{video}: Seaching video:#{video}\n")  if debug_stats || debug
 	puts("-------------------------------------------------------------") if debug
 
 	realFrame = -1
@@ -781,7 +781,7 @@ videoArray.each do |video|
 	
 	#If the MOVIE has no segments related to the CLIP, skip it!
 	if toSearchL[mid] == nil
-		puts "[L0] Skipping MOVIE #{video}" if debug_stats
+		puts "#{video}: [L0] Skipping MOVIE #{video}" if debug_stats
 		next
 	end
 	
@@ -840,7 +840,7 @@ videoArray.each do |video|
 	b_val1 = true if (sum+diff) >= @@lengthSec*0.4
 	
 	if b_val1 == false
-		puts "[L1] Skipping MOVIE #{video}" if debug_stats || debug
+		puts "#{video}: [L1] Skipping MOVIE #{video}" if debug_stats || debug
 		next	
 	end
   
@@ -940,7 +940,7 @@ videoArray.each do |video|
 			#p "L #{video}: idx=#{x} sec:#{auxArray[x][0]} CountG=#{countG}/#{idxDistLumaClip.size}"
 
 			if countG >= idxDistLumaClip.size
-				p "L #{video}: idx=#{x} sec:#{auxArray[x][0]} CountG=#{countG}/#{idxDistLumaClip.size}"
+				puts "#{video}: L: idx=#{x} sec:#{auxArray[x][0]} CountG=#{countG}/#{idxDistLumaClip.size}"
 				found_idx << x
 				b_val2 = true
 			end
@@ -984,7 +984,7 @@ videoArray.each do |video|
 	##
 	#If the clip we're looking for does not have the same time intervals, for the luma we're looking for, as the clip we want to find, discard it
 	if b_val2 == false
-		puts "[L2] Skipping MOVIE #{video}" if debug_stats || debug
+		puts "#{video}: [L2] Skipping MOVIE #{video}" if debug_stats || debug
 		next
 	end
 
@@ -1101,14 +1101,14 @@ videoArray.each do |video|
 			end
 		end
 		
-		p "tanimoto for idx=#{idx} #{lumaArraySecCluster.keys.sort[idx]}(#{lumaArraySecCluster.keys.sort[idx]*fps.round})~#{lumaArraySecCluster.keys.sort[idx]+@@lengthSec}(#{(lumaArraySecCluster.keys.sort[idx]+@@lengthSec)*fps.round}): #{tscore}" if debug || debug_stats
+		puts("#{video}: tanimoto for idx=#{idx} #{lumaArraySecCluster.keys.sort[idx]}(#{lumaArraySecCluster.keys.sort[idx]*fps.round})~#{lumaArraySecCluster.keys.sort[idx]+@@lengthSec}(#{(lumaArraySecCluster.keys.sort[idx]+@@lengthSec)*fps.round}): #{tscore}") if debug || debug_stats
 
 		#Compare with tanimoto
 		#if low value, skip to next index
 		#for qcif anf 5fps:
 		if tscore < 0.85
 		#if tscore < 0.97
-			puts "[L3] Skipping segment #{lumaArraySecCluster.keys.sort[idx]}(#{lumaArraySecCluster.keys.sort[idx]*fps.round})~#{lumaArraySecCluster.keys.sort[idx]+@@lengthSec}(#{(lumaArraySecCluster.keys.sort[idx]+@@lengthSec)*fps.round}) of MOVIE #{video}" if debug_stats || debug
+			puts "#{video}: [L3] Skipping segment #{lumaArraySecCluster.keys.sort[idx]}(#{lumaArraySecCluster.keys.sort[idx]*fps.round})~#{lumaArraySecCluster.keys.sort[idx]+@@lengthSec}(#{(lumaArraySecCluster.keys.sort[idx]+@@lengthSec)*fps.round}) of MOVIE #{video}" if debug_stats || debug
 			next
 		end
 		
@@ -1133,7 +1133,7 @@ videoArray.each do |video|
 		### Use index or begin of index + time?
 		##
 		#
-		p "[#{video}] Further analysing segment #{(lumaArraySecCluster.keys.sort[idx].to_f*fps).round}..#{((lumaArraySecCluster.keys.sort[idx].to_f+(@@lengthSec/2))*fps).round}" if debug || debug_stats
+		puts("#{video}: Further analysing segment #{(lumaArraySecCluster.keys.sort[idx].to_f*fps).round}..#{((lumaArraySecCluster.keys.sort[idx].to_f+(@@lengthSec/2))*fps).round}") if debug || debug_stats
 		((lumaArraySecCluster.keys.sort[idx].to_f*fps).round..((lumaArraySecCluster.keys.sort[idx].to_f+(@@lengthSec/2))*fps).round).each do |x|
 		##p "[#{video}] Further analysing segment #{(lumaArraySecCluster.keys.sort[idx].to_f*fps).round}..#{(lumaArraySecCluster.keys.sort[idx+1].to_f*fps).round}" if debug || debug_stats
 		##((lumaArraySecCluster.keys.sort[idx].to_f*fps).round..(lumaArraySecCluster.keys.sort[idx+1].to_f*fps).round).each do |x|
@@ -1214,13 +1214,15 @@ videoArray.each do |video|
 
 			if auxSqrtLuma[x] < 340 && taniLuma[x] > 0.9 #&& auxDiffLuma[x] < 2 
 				if auxSqrtLuma[x] < old_v || taniLuma[x] > old_t
-					#line = sprintf("%s: %d LDiff:%2.5f LVectD:%2.5f TaniL:%2.5f\n", video, x, auxDiffLuma[x], auxSqrtLuma[x], taniLuma[x])
-					line = sprintf("%s: %d LVectD:%2.5f TaniL:%2.5f\n", video, x, auxSqrtLuma[x], taniLuma[x])
-					#line = sprintf("%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
-					#printf("###%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
-					old_t = taniLuma[x]
-					old_f = x
-					old_v = auxSqrtLuma[x]
+					if (taniLuma[x] > old_t || auxSqrtLuma[x] < old_v) && x > old_f+50
+						#line = sprintf("%s: %d LDiff:%2.5f LVectD:%2.5f TaniL:%2.5f\n", video, x, auxDiffLuma[x], auxSqrtLuma[x], taniLuma[x])
+						line = sprintf("%s: %d LVectD:%2.5f TaniL:%2.5f\n", video, x, auxSqrtLuma[x], taniLuma[x])
+						#line = sprintf("%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
+						#printf("###%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
+						old_t = taniLuma[x]
+						old_f = x
+						old_v = auxSqrtLuma[x]
+					end
 				end	
 			#elsif debug_stats
 			end

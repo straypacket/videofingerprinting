@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
   sqlite3 *handle;
   
   //Full array init of size 5h@60fps (a.k.a large enough)
-  //TO FIX: use dynamic array
+  //TO FIX: use dynamic array?
   int *fullArray = (int*) calloc ( (1080000-1), sizeof (int));
 
   // try to create the database. If it doesnt exist, it would be created
@@ -807,9 +807,8 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *argv[], int threshold, i
   
   //For each frame of the movie
   for (aux = 0 ; aux < size ; aux++) {
-	//printf("%d => %d\n", aux, shortArray[aux]);
     avgLuma += shortArray[aux];
-	printf("avgL=%d frameL=%d counter=%d time=%f\n",avgLuma/counter, shortArray[aux], counter, aux/fps);
+	//printf("avgL=%d frameL=%d counter=%d time=%f\n",avgLuma/counter, shortArray[aux], counter, aux/fps);
 	
 	//If the current value is above of below the threshold and if we're not at the first frame, make a new index
 	//if ( (shortArray[aux] < ((avgLuma/counter)-thresh) || shortArray[aux] > ((avgLuma/counter)+thresh)) ) {
