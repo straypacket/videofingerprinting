@@ -24,6 +24,7 @@ import = false
 uprelem = -1.0
 hitCounter = 0
 l3uniq = false
+gcount = 0
 
 (3..ARGV.size-1).each do |arg|
   if ARGV[arg] == "-debug"
@@ -1214,9 +1215,9 @@ videoArray.each do |video|
 
 			if auxSqrtLuma[x] < 340 && taniLuma[x] > 0.9 #&& auxDiffLuma[x] < 2 
 				if auxSqrtLuma[x] < old_v || taniLuma[x] > old_t
-					if (taniLuma[x] > old_t || auxSqrtLuma[x] < old_v) && x > old_f+50
+					if taniLuma[x] > old_t || auxSqrtLuma[x] < old_v
 						#line = sprintf("%s: %d LDiff:%2.5f LVectD:%2.5f TaniL:%2.5f\n", video, x, auxDiffLuma[x], auxSqrtLuma[x], taniLuma[x])
-						line = sprintf("%s: %d LVectD:%2.5f TaniL:%2.5f\n", video, x, auxSqrtLuma[x], taniLuma[x])
+						line = sprintf("%s [%d]: %d LVectD:%2.5f TaniL:%2.5f\n", video, gcount, x, auxSqrtLuma[x], taniLuma[x])
 						#line = sprintf("%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
 						#printf("###%s: %d LVectD:%2.5f\n", video, x, auxSqrtLuma[x])
 						old_t = taniLuma[x]
@@ -1235,6 +1236,7 @@ videoArray.each do |video|
 		end
 	
 	end
+	gcount += 1
 
 end
 db.close()

@@ -46,7 +46,10 @@ int main(int argc, char *argv[]) {
 	    printf("Please input a DB name for the movie!\n");
 		return -1;
 	  } else {
-		filename = argv[2];
+	    if (strrchr(argv[2],'/') == NULL)
+		  filename = argv[2];
+		else
+		  filename = strrchr(argv[2],'/') + 1;
 	  }
 	} else {
 	  filename = argv[1];
@@ -72,7 +75,7 @@ int main(int argc, char *argv[]) {
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
 
-  retval = sqlite3_open("/home/gsc/test_suj_branch3_import.db",&handle);
+  retval = sqlite3_open("/Users/gsc/test_suj_branch3_import.db",&handle);
   // If connection failed, handle returns NULL
   if(retval){
 	printf("Database connection failed\n");
