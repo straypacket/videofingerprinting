@@ -120,6 +120,11 @@ int main(int argc, char *argv[]) {
 		mode = 77;
 	}
 	
+	if (strcmp(argv[1], "-sujcentral_multi") == 0) {
+		printf("Using SUJ Central with SQL (multi)\n");
+		mode = 80;
+	}
+	
 	if (strcmp(argv[1], "-sujtext") == 0) {
 		printf("Using SUJ with text output\n");
 		mode = 2;
@@ -127,7 +132,9 @@ int main(int argc, char *argv[]) {
   }
   
   //Find the last / in passed filename. 
-  char *filename = strrchr(argv[2],'/') + 1;
+  //DEBUG! on mac this shit segfaults :(
+  //char *filename = strrchr(argv[2],'/') + 1;
+  char *filename = argv[2];
 
   /*** DB initialization ***/
   int retval = 0;
@@ -142,7 +149,7 @@ int main(int argc, char *argv[]) {
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
   if (mode == 1) {
-	retval = sqlite3_open("/home/gsc/test_cgo_modelling_rot3.db",&handle);
+	retval = sqlite3_open("/Users/gsc/test_cgo_modelling_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -247,6 +254,14 @@ int main(int argc, char *argv[]) {
   }
   else if (mode == 77) {
 	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot7.db",&handle);
+	// If connection failed, handle returns NULL
+	if(retval){
+		printf("Database connection failed\n");
+		return -1;
+	}
+  }
+  else if (mode == 80) {
+	retval = sqlite3_open("/Users/gsc/test_suj_branch2_central_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -393,14 +408,13 @@ int main(int argc, char *argv[]) {
         sws_freeContext(sws_context);
 		
 		if (mode == 0)
-			//retval = AvgFrame(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, argv, handle, fps);
 			retval = AvgFrame(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, filename, handle, fps);
 		else if (mode == 1)
 			retval = cgo(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, filename, handle);
 			//retval = cgo(pFrameYUV, 320, 240, i++, argv, handle);
 		else if (mode == 2)
 			retval = AvgFrameText(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, pFrame->key_frame);
-		else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77)
+		else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77 || mode == 80)
 			//retval = AvgFrameCentral(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, argv, handle, fps);
 			retval = AvgFrameImport(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, filename, handle, fps, fullArray);
 		else {
@@ -457,7 +471,7 @@ int cgo(AVFrame *pFrame, int width, int height, int iFrame, char *filename, sqli
   Gx = (int **) calloc ( (width-1), sizeof (int *));
   for (i=0; i<(width-1); ++i)
 	Gx[i] = (int *) calloc ( (height-1), sizeof (int));
-	
+  
   int **Gy;
   Gy = (int **) calloc ( (width-1)*(height-1), sizeof (int *));
   for (i=0; i<(width-1); ++i)
