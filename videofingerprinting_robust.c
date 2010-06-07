@@ -30,6 +30,8 @@ int AvgFrameCentral(AVFrame *pFrameFoo, int width, int height, int iFrame, char 
 int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3 *handle, double fps, int *fullArray);
 int AvgFrameText(AVFrame *pFrameFoo, int width, int height, int iFrame, int key);
 int cgo(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3 *handle);
+static int sqlite_makeindexes_callback(void *newinfo, int argc, char **argv, char **azColName);
+static int sqlite_mid_callback(void *newinfo, int argc, char **argv, char **azColName);
 int makeIndexes(int *shortArray, sqlite3 *handle, char *filename, int threshold, int size, double fps);
 
 double prevY, prevU, prevV = 0.0;
@@ -272,10 +274,20 @@ int main(int argc, char *argv[]) {
 	  char query1[] = "create table allmovies (allmovieskey INTEGER PRIMARY KEY,name TEXT,fps INTEGER);";
 	  // Execute the query for creating the table
 	  retval = sqlite3_exec(handle,query1,0,0,0);
-	  char query2[] = "PRAGMA count_changes = OFF";
+	  char query2[] = "create table hashluma (avg_range int, movies TEXT)";
 	  retval = sqlite3_exec(handle,query2,0,0,0);
-	  char query3[] = "PRAGMA synchronous = OFF";
+	  char query3[] = "PRAGMA count_changes = OFF";
 	  retval = sqlite3_exec(handle,query3,0,0,0);
+	  char query4[] = "PRAGMA synchronous = OFF";
+	  retval = sqlite3_exec(handle,query4,0,0,0);
+	  
+	  //Populating the hash tables
+	  char hashquery[] = "insert into hashluma (avg_range) values (   )";
+	  int i = 0;
+	  for(i=0; i <= 254; i++) {
+		sprintf(hashquery, "insert into hashluma (avg_range) values (%d)", i);
+		retval = sqlite3_exec(handle,hashquery,0,0,0);
+	  }
 	  
 	  char table_query[150];
 	  memset(table_query, 0, 150);
@@ -810,17 +822,58 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
   return 0;
 };
 
+static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
+	memset((char *)info, 0, 500);
+    int i;
+    for(i=0; i<argc; i++){
+      //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
+	  sprintf(info, "%s", argv[i] ? argv[i]: "");
+    }
+    return 0;
+}
+
+static int sqlite_mid_callback(void *mid, int argc, char **argv, char **azColName){
+	memset((char *)mid, 0, 50);
+    int i;
+    for(i=0; i<argc; i++){
+      //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
+	  sprintf(mid, "%s", argv[i] ? argv[i]: "NULL");
+    }
+    return 0;
+}
+
 int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold, int size, double fps) {
 
   int aux = 0;
   //float first = 0.0f;
   //Up-down fix
   int first = shortArray[0];
+  double prev = 0;
   int avgLuma = 0;
   int thresh = threshold * 100;
   int retval = 0;
   char insert_query[500];
+  char select_query[500];
+  char info[500];
+  char newinfo[500];
+  char mid[50];
   int counter = 1;
+  
+  memset(info, 0, 500);
+  memset(newinfo, 0, 500);
+  memset(insert_query, 0, 500);
+  memset(select_query, 0, 500);
+  memset(mid, 0, 50);
+  
+  //Get movie id
+  memset(select_query, 0, 500);
+  sprintf(select_query, "select allmovieskey from allmovies where name = \"%s\"", filename );
+  retval = sqlite3_exec(handle,select_query,sqlite_mid_callback,mid,NULL);
+	  
+  //printf("Movie %s MID is %s\n", filename, mid);
+  
+  if (retval)
+	printf("%s\n",sqlite3_errmsg(handle));
   
   //For each frame of the movie
   for (aux = 0 ; aux < size ; aux++) {
@@ -832,9 +885,27 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	//Up-down fix
 	if ( (shortArray[aux] < (first-thresh) || shortArray[aux] > (first+thresh)) ) {
 	  
-	  //Update the database
+	  //Update the movie database
       memset(insert_query, 0, 500);
       sprintf(insert_query, "insert into '%s' values (%f,%d)",filename,aux/fps,first);
+      retval = sqlite3_exec(handle,insert_query,0,0,0);
+	  
+      if (retval)
+	    printf("%s\n",sqlite3_errmsg(handle));
+			  
+	  //Get previous hash info
+	  memset(select_query, 0, 500);
+	  sprintf(select_query, "select movies from hashluma where avg_range = \"%d\"", first/100);
+	  retval = sqlite3_exec(handle,select_query,sqlite_makeindexes_callback,info,NULL);
+
+      if (retval)
+	    printf("%s\n",sqlite3_errmsg(handle));
+		
+	  //Update the hashtable
+	  memset(newinfo, 0, 500);
+	  sprintf(newinfo, "%s%s:%f-%f,", info, mid, prev, aux/fps);
+	  //printf("%s\n", newinfo);
+	  sprintf(insert_query, "update hashluma set movies = \"%s\" where avg_range = \"%d\"", newinfo, first/100);
       retval = sqlite3_exec(handle,insert_query,0,0,0);
   
       if (retval)
@@ -846,6 +917,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	  //first = aux/fps;
 	  //Up-down fix
 	  first = shortArray[aux+1];
+	  prev = aux/fps;
 	}
 	else
 	  counter++;
