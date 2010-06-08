@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 14) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_cif.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_cif.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 24) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_fps.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_fps.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 34) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_brate.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_brate.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 44) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_qcif.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_qcif.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 54) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_5fps.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_5fps.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 64) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_grey.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_grey.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 71) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot1.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot1.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 72) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot2.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot2.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 73) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot3.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot3.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 75) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot5.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot5.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 77) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch2_central_rot7.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot7.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 80) {
-	retval = sqlite3_open("/Users/gsc/test_suj_branch2_central_multi.db",&handle);
+	retval = sqlite3_open("/Users/gsc/test_suj_branch3_import_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -274,19 +274,25 @@ int main(int argc, char *argv[]) {
 	  char query1[] = "create table allmovies (allmovieskey INTEGER PRIMARY KEY,name TEXT,fps INTEGER);";
 	  // Execute the query for creating the table
 	  retval = sqlite3_exec(handle,query1,0,0,0);
-	  char query2[] = "create table hashluma (avg_range int, movies TEXT)";
+	  char query2[] = "PRAGMA count_changes = OFF";
 	  retval = sqlite3_exec(handle,query2,0,0,0);
-	  char query3[] = "PRAGMA count_changes = OFF";
+	  char query3[] = "PRAGMA synchronous = OFF";
 	  retval = sqlite3_exec(handle,query3,0,0,0);
-	  char query4[] = "PRAGMA synchronous = OFF";
-	  retval = sqlite3_exec(handle,query4,0,0,0);
 	  
-	  //Populating the hash tables
-	  char hashquery[] = "insert into hashluma (avg_range) values (   )";
-	  int i = 0;
-	  for(i=0; i <= 254; i++) {
-		sprintf(hashquery, "insert into hashluma (avg_range) values (%d)", i);
-		retval = sqlite3_exec(handle,hashquery,0,0,0);
+	  //Hashluma table
+	  char query_hash[] = "create table hashluma (avg_range int, movies TEXT)";
+	  retval = sqlite3_exec(handle,query_hash,0,0,0);
+	  
+	  if (!retval) {
+	    //Populating the hash tables
+		printf("Populating hashluma table\n");
+	    char hashquery[50];
+	    memset(hashquery, 0, 50);
+	    int i = 0;
+	    for(i=0; i <= 254; i++) {
+		  sprintf(hashquery, "insert into hashluma (avg_range) values (%d)", i);
+		  retval = sqlite3_exec(handle,hashquery,0,0,0);
+	    }
 	  }
 	  
 	  char table_query[150];
@@ -298,13 +304,10 @@ int main(int argc, char *argv[]) {
 	  } else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77) {
 		sprintf(table_query,"create table '%s' (s_end FLOAT, luma INTEGER);",filename);
 	  }
-	  
 	  retval = sqlite3_exec(handle,table_query,0,0,0);
+	  
 	  if (retval) {
-		char error [100];
-		memset(error, 0, 100);
-		sprintf(error,"Table for movie %s already exists!\n",filename);
-		printf("%s",error);
+		printf("Table for movie %s already exists!\n",filename);
 		sqlite3_close(handle);
 		return -1;
 	  }
@@ -823,7 +826,7 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
 };
 
 static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
-	memset((char *)info, 0, 500);
+	memset((char *)info, 0, 5000);
     int i;
     for(i=0; i<argc; i++){
       //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
@@ -854,12 +857,12 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
   int retval = 0;
   char insert_query[500];
   char select_query[500];
-  char info[500];
+  char info[5000];
   char newinfo[500];
   char mid[50];
   int counter = 1;
   
-  memset(info, 0, 500);
+  memset(info, 0, 5000);
   memset(newinfo, 0, 500);
   memset(insert_query, 0, 500);
   memset(select_query, 0, 500);
