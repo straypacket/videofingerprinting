@@ -827,7 +827,7 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
 
 static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
     //FIX: make info dynamic!
-	memset((char *)info, 0, 25000);
+	memset((char *)info, 0, 50000);
     int i;
     for(i=0; i<argc; i++){
       //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
@@ -857,20 +857,20 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
   int thresh = threshold * 100;
   int retval = 0;
   char insert_query[50000];
-  char select_query[500];
-  char info[25000];
+  char select_query[50000];
+  char info[50000];
   char newinfo[50000];
   char mid[50];
   int counter = 1;
   
-  memset(info, 0, 5000);
-  memset(newinfo, 0, 5000);
-  memset(insert_query, 0, 500);
-  memset(select_query, 0, 50100);
+  memset(info, 0, 50000);
+  memset(newinfo, 0, 50000);
+  memset(insert_query, 0, 50000);
+  memset(select_query, 0, 50000);
   memset(mid, 0, 50);
   
   //Get movie id
-  memset(select_query, 0, 500);
+  memset(select_query, 0, 50000);
   sprintf(select_query, "select allmovieskey from allmovies where name = \"%s\"", filename );
   retval = sqlite3_exec(handle,select_query,sqlite_mid_callback,mid,NULL);
 	  
@@ -892,7 +892,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	if ( (shortArray[aux] < (first-thresh) || shortArray[aux] > (first+thresh)) ) {
 	  
 	  //Update the movie database
-      memset(insert_query, 0, 500);
+      memset(insert_query, 0, 50000);
       sprintf(insert_query, "insert into '%s' values (%f,%d)",filename,aux/fps,first);
       retval = sqlite3_exec(handle,insert_query,0,0,0);
 	  
@@ -900,7 +900,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	    printf("%s\n",sqlite3_errmsg(handle));
 			  
 	  //Get previous hash info
-	  memset(select_query, 0, 50100);
+	  memset(select_query, 0, 50000);
 	  sprintf(select_query, "select movies from hashluma where avg_range = \"%d\"", first/100);
 	  retval = sqlite3_exec(handle,select_query,sqlite_makeindexes_callback,info,NULL);
 
