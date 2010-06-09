@@ -63,67 +63,67 @@ int main(int argc, char *argv[]) {
 	}
 	
 	if (strcmp(argv[1], "-sujimport") == 0) {
-		printf("Using SUJ Central with SQL\n");
+		printf("Using SUJ with SQL\n");
 		mode = 4;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_cif") == 0) {
-		printf("Using SUJ Central with SQL (cif)\n");
+	if (strcmp(argv[1], "-sujimport_cif") == 0) {
+		printf("Using SUJ with SQL (cif)\n");
 		mode = 14;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_fps") == 0) {
-		printf("Using SUJ Central with SQL (fps)\n");
+	if (strcmp(argv[1], "-sujimport_fps") == 0) {
+		printf("Using SUJ with SQL (fps)\n");
 		mode = 24;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_brate") == 0) {
-		printf("Using SUJ Central with SQL (brate)\n");
+	if (strcmp(argv[1], "-sujimport_brate") == 0) {
+		printf("Using SUJ with SQL (brate)\n");
 		mode = 34;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_qcif") == 0) {
-		printf("Using SUJ Central with SQL (qcif)\n");
+	if (strcmp(argv[1], "-sujimport_qcif") == 0) {
+		printf("Using SUJ with SQL (qcif)\n");
 		mode = 44;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_5fps") == 0) {
-		printf("Using SUJ Central with SQL (5fps)\n");
+	if (strcmp(argv[1], "-sujimport_5fps") == 0) {
+		printf("Using SUJ with SQL (5fps)\n");
 		mode = 54;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_grey") == 0) {
-		printf("Using SUJ Central with SQL (grey)\n");
+	if (strcmp(argv[1], "-sujimport_grey") == 0) {
+		printf("Using SUJ with SQL (grey)\n");
 		mode = 64;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_rot1") == 0) {
-		printf("Using SUJ Central with SQL (rot1)\n");
+	if (strcmp(argv[1], "-sujimport_rot1") == 0) {
+		printf("Using SUJ with SQL (rot1)\n");
 		mode = 71;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_rot2") == 0) {
-		printf("Using SUJ Central with SQL (rot2)\n");
+	if (strcmp(argv[1], "-sujimport_rot2") == 0) {
+		printf("Using SUJ with SQL (rot2)\n");
 		mode = 72;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_rot3") == 0) {
-		printf("Using SUJ Central with SQL (rot3)\n");
+	if (strcmp(argv[1], "-sujimport_rot3") == 0) {
+		printf("Using SUJ with SQL (rot3)\n");
 		mode = 73;
 	}
 
-	if (strcmp(argv[1], "-sujcentral_rot5") == 0) {
-		printf("Using SUJ Central with SQL (rot5)\n");
+	if (strcmp(argv[1], "-sujimport_rot5") == 0) {
+		printf("Using SUJ with SQL (rot5)\n");
 		mode = 75;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_rot7") == 0) {
-		printf("Using SUJ Central with SQL (rot7)\n");
+	if (strcmp(argv[1], "-sujimport_rot7") == 0) {
+		printf("Using SUJ with SQL (rot7)\n");
 		mode = 77;
 	}
 	
-	if (strcmp(argv[1], "-sujcentral_multi") == 0) {
-		printf("Using SUJ Central with SQL (multi)\n");
+	if (strcmp(argv[1], "-sujimport_multi") == 0) {
+		printf("Using SUJ with SQL (multi)\n");
 		mode = 80;
 	}
 	
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
   if (mode == 1) {
-	retval = sqlite3_open("/Users/gsc/test_cgo_modelling_multi.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_cgo_modelling_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 80) {
-	retval = sqlite3_open("/Users/gsc/test_suj_branch3_import_multi.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
 		sprintf(table_query,"create table '%s' (frame INTEGER, b1 FLOAT, b2 FLOAT, b3 FLOAT, b4 FLOAT, b5 FLOAT, b6 FLOAT, b7 FLOAT, b8 FLOAT);",filename);
 	  } else if (mode == 0 ) {
 		sprintf(table_query,"create table '%s' (s_end INTEGER, luma INTEGER, chromau INTEGER, chromav INTEGER);",filename);
-	  } else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77) {
+	  } else if (mode == 4 || mode == 14 || mode == 24 || mode == 34 || mode == 44 || mode == 54 || mode == 64 || mode == 71 || mode == 72 || mode == 73 || mode == 75 || mode == 77 || mode == 80) {
 		sprintf(table_query,"create table '%s' (s_end FLOAT, luma INTEGER);",filename);
 	  }
 	  retval = sqlite3_exec(handle,table_query,0,0,0);
@@ -826,7 +826,8 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
 };
 
 static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
-	memset((char *)info, 0, 5000);
+    //FIX: make info dynamic!
+	memset((char *)info, 0, 25000);
     int i;
     for(i=0; i<argc; i++){
       //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
@@ -855,17 +856,17 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
   int avgLuma = 0;
   int thresh = threshold * 100;
   int retval = 0;
-  char insert_query[500];
+  char insert_query[50000];
   char select_query[500];
-  char info[5000];
-  char newinfo[500];
+  char info[25000];
+  char newinfo[50000];
   char mid[50];
   int counter = 1;
   
   memset(info, 0, 5000);
-  memset(newinfo, 0, 500);
+  memset(newinfo, 0, 5000);
   memset(insert_query, 0, 500);
-  memset(select_query, 0, 500);
+  memset(select_query, 0, 50100);
   memset(mid, 0, 50);
   
   //Get movie id
@@ -880,6 +881,8 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
   
   //For each frame of the movie
   for (aux = 0 ; aux < size ; aux++) {
+    //printf("aux=%d\n", aux);
+	//fflush(stdout);
     avgLuma += shortArray[aux];
 	//printf("avgL=%d frameL=%d counter=%d time=%f\n",avgLuma/counter, shortArray[aux], counter, aux/fps);
 	
@@ -897,7 +900,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	    printf("%s\n",sqlite3_errmsg(handle));
 			  
 	  //Get previous hash info
-	  memset(select_query, 0, 500);
+	  memset(select_query, 0, 50100);
 	  sprintf(select_query, "select movies from hashluma where avg_range = \"%d\"", first/100);
 	  retval = sqlite3_exec(handle,select_query,sqlite_makeindexes_callback,info,NULL);
 
@@ -905,9 +908,11 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	    printf("%s\n",sqlite3_errmsg(handle));
 		
 	  //Update the hashtable
-	  memset(newinfo, 0, 500);
+	  //FIX: make newinfo dynamic!
+	  memset(newinfo, 0, 50000);
 	  sprintf(newinfo, "%s%s:%f-%f,", info, mid, prev, aux/fps);
 	  //printf("%s\n", newinfo);
+	  
 	  sprintf(insert_query, "update hashluma set movies = \"%s\" where avg_range = \"%d\"", newinfo, first/100);
       retval = sqlite3_exec(handle,insert_query,0,0,0);
   
