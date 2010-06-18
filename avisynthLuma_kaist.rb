@@ -19,19 +19,30 @@ debug = false
 sqlite = false
 dist = ""
 mac = false
+l3fact = 0.3
 hitCounter = 0
+thresh = 300
+min = false
 
 (2..ARGV.size-1).each do |arg|
   if ARGV[arg] == "-debug"
-    puts("Debug ON")
+    #puts("Debug ON")
     debug = true
   elsif ARGV[arg] == "-mac"
     mac = true
+  elsif ARGV[arg] == "-min"
+    min = true
   elsif ARGV[arg] == "-dist"
     dist = ARGV[arg+1].to_s
-    puts("Dist mode ON (dist=#{dist})")
+    #puts("Dist mode ON (dist=#{dist})")
+  elsif ARGV[arg] == "-l3fact"
+    l3fact = ARGV[arg+1].to_f
+    #puts("Dist mode ON (l3fact=#{l3fact})")
   #else
   #  raise RuntimeError, "Illegal command!"
+  elsif ARGV[arg] == "-thresh"
+    thresh = ARGV[arg+1].to_f
+    #puts("Thresh manual mode ON (thresh=#{thresh})")
   end
 end
 
@@ -68,9 +79,9 @@ end
 #Initialization of databases
 begin
 	if dist.empty?
-		db = SQLite3::Database.new( "#{path}/test_cgo_modelling_temp_nonorm.db" )
+		db = SQLite3::Database.new( "#{path}/test_cgo_modelling.db" )
 	else
-		orig_db = SQLite3::Database.new( "#{path}/test_cgo_modelling_temp_nonorm.db" )
+		orig_db = SQLite3::Database.new( "#{path}/test_cgo_modelling.db" )
 		db = SQLite3::Database.new( "#{path}/test_cgo_modelling_#{dist}.db" )
 	end
 rescue
@@ -133,7 +144,6 @@ end
 #re-order array so that sourceVideo starts first
 videoArray.delete(sourceVideo);
 videoArray.unshift(sourceVideo);
-videoArray.unshift(sourceVideo);
 
 analyzedVideosCounter = 0
 selectedVideosCounter = 0
@@ -142,28 +152,32 @@ selectedVideosCounter = 0
 #Thresh for lookups with no distortions:
 #thresh = 8; T = 0.0004
 #
-thresh = 800
-T = 0.2
+#thresh = 800
+#T = 0.2
+T = l3fact
 clipCK = Array.new
 movieCK = Array.new
 query = Array.new
 firstpass = 0
+uniqCounter = Array.new
+@@TPCounter = 0
 
-print("Searching for #{sourceVideo}...\n")
+print("[#{l3fact}] Searching for #{sourceVideo}...\n")
 
 videoArray.each do |video|
+
+	p "Analyzing #{video}" if debug
 
 	movieSecs = Array.new
 	  
 	####CLIP WE WANT TO LOOK FOR (PATTERN TO SEARCH)
 	#
-	if sourceVideo == video && firstpass == 0
+	if sourceVideo == video
 		if dist.empty?
-			fps = db.execute( "select * from allmovies where name = \"#{video}\"")[0][2].to_f
+			fps = db.execute( "select * from allmovies where name = \"#{video}\"")[0][2].to_f/100.0
 			raise SQLException if fps < 1 || fps == nil
 		else
-			#print "dist!\n"
-			ofps = orig_db.execute( "select * from allmovies where name = \"#{video}\"")[0][2].to_f
+			ofps = orig_db.execute( "select * from allmovies where name = \"#{video}\"")[0][2].to_f/100.0
 			raise SQLException if ofps < 1 || ofps == nil
 		end
 		
@@ -174,26 +188,23 @@ videoArray.each do |video|
 				clipCK = orig_db.execute( "select b1,b2,b3,b4,b5,b6,b7,b8 from \"#{video}\" where frame >= #{firstSec*ofps} and frame < #{(firstSec*ofps)+K}" )
 			end
 		rescue
-			raise RuntimeError, "Video is not in database! Did you run the -import flag beforehand?"
+			raise RuntimeError, "Video is not in database! Did you import the file beforehand?"
 		end
 	
 		print("Using as source video:#{video}\n")
 	end
 	
-	firstpass = 1
-	####
-	
 	fps = db.execute( "select * from allmovies where name = \"#{video}\"")[0][2].to_f
 	raise SQLException if fps < 1 || fps == nil
-	
+
 	#movieSecs = db.execute( "select frame from \"#{video}\" where b2 > #{clipCK[0][1].to_f-T} and b2 < #{clipCK[0][1].to_f+T} ")#and b7 > #{clipCK[0][6].to_f-T} and b7 < #{clipCK[0][6].to_f+T}")
 	movieSecs = db.execute( "select frame from \"#{video}\" where b1 > #{clipCK[0][0].to_f-T} and b1 < #{clipCK[0][0].to_f+T} and b2 > #{clipCK[0][1].to_f-T} and b2 < #{clipCK[0][1].to_f+T} and b3 > #{clipCK[0][2].to_f-T} and b3 < #{clipCK[0][2].to_f+T} and b4 > #{clipCK[0][3].to_f-T} and b4 < #{clipCK[0][3].to_f+T} and b5 > #{clipCK[0][4].to_f-T} and b5 < #{clipCK[0][4].to_f+T} and b6 > #{clipCK[0][5].to_f-T} and b6 < #{clipCK[0][5].to_f+T} and b7 > #{clipCK[0][6].to_f-T} and b7 < #{clipCK[0][6].to_f+T} and b8 > #{clipCK[0][7].to_f-T} and b8 < #{clipCK[0][7].to_f+T}" )
-
+	
 	##
 	#Now we search the big MOVIE sections to find our sequence
 
 	#p movieSecs
-	print("Seaching video:#{video} (found #{movieSecs.size} neighbors)\n") if debug && movieSecs.size != 0
+	print("Seaching video:#{video} (found #{movieSecs.size} neighbors)\n") if movieSecs.size != 0 && debug
 
 	#p movieSecs.size
 	
@@ -203,15 +214,18 @@ videoArray.each do |video|
 		#p "#{movieSecs[s]}:" if debug
 		sum = 0
 		query = db.execute( "select b1,b2,b3,b4,b5,b6,b7,b8 from \"#{video}\" where frame >= #{movieSecs[s][0].to_i} and frame < #{movieSecs[s][0].to_i+(K)}" )
-		(0..query.size-1).each do |f|
+
+		(0..[query.size-1,clipCK.size-1].min).each do |f|
 			sum += vectD(clipCK[f],query[f])
 		end
 		
 		aux = movieSecs[s][0].to_i
 		if sum < thresh
 			if prev+(K/2) < aux
-				p "#{video} [#{aux}]=#{sum}" if sum < thresh
+				puts("#{video} [#{aux} #{aux/(fps/100)}]=#{sum}") if sum < thresh && min == false
 				hitCounter += 1 if sum < thresh
+				uniqCounter << video
+				@@TPCounter += 1 if sourceVideo == video
 			end
 			prev = aux
 		end
@@ -222,8 +236,6 @@ videoArray.each do |video|
 end
 db.close()
 
-puts("No hits were found! :(") if hitCounter == 0
-puts("") if hitCounter == 0
-
-puts("#{hitCounter} hits were found") if hitCounter != 0
+print("Hits found: #{hitCounter} Unique hits found: #{uniqCounter.uniq.size} TPCounter: #{@@TPCounter}\n")
 print("Test run-time for #{videoArray.size} movies was ","%5.2f" % (Time.new-stime), " seconds\n")
+puts("")

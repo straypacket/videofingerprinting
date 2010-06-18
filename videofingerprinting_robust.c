@@ -10,7 +10,7 @@ OSX
 gcc -o videofingerprinting videofringerprinting.c -I/opt/local/include -L/opt/local/include -lsqlite3 -lavutil -lavformat -lavcodec -lswscale -lz -lm -Wall
 *
 To run:
-./videofingerprint <mode> <video.mp4>
+./videofingerprint <mode> [<threshold>] <video.mp4>
 ******/
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -50,6 +50,8 @@ Mode of operation:
 int mode = 0;
 
 int main(int argc, char *argv[]) {
+
+  char *filename;
 
   if (argv[1] != NULL) {
 	if (strcmp(argv[1], "-cgo") == 0) {
@@ -131,12 +133,20 @@ int main(int argc, char *argv[]) {
 		printf("Using SUJ with text output\n");
 		mode = 2;
 	}
+	
+	if (argc == 3) {
+		filename = argv[2];
+	}
+	else if (argc == 4) {
+		filename = argv[3];
+		threshold = atoi(argv[2]);
+	}
   }
   
+  //printf("Params: filename=%s dbthresh=%d argc=%d\n", filename, threshold, argc);
+  
   //Find the last / in passed filename. 
-  //DEBUG! on mac this shit segfaults :(
-  //char *filename = strrchr(argv[2],'/') + 1;
-  char *filename = argv[2];
+  //char *filename = argv[3];
 
   /*** DB initialization ***/
   int retval = 0;
@@ -151,7 +161,7 @@ int main(int argc, char *argv[]) {
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
   if (mode == 1) {
-	retval = sqlite3_open("/home/gsc/test_cgo_modelling_multi.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_cgo_modelling.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -588,8 +598,10 @@ int cgo(AVFrame *pFrame, int width, int height, int iFrame, char *filename, sqli
   
   retval = sqlite3_exec(handle,insert_query,0,0,0);
   
-  if (retval)
-	printf("%s\n",sqlite3_errmsg(handle));
+  if (retval) {
+	printf("%Error: s\n",sqlite3_errmsg(handle));
+	printf("Insert query=%s\n",insert_query);
+  }
   
   return retval;
 }
@@ -814,7 +826,9 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
     for (x=width/M; x<2*width/M; x++)
       luma += pFrameFoo->data[0][y*pFrameFoo->linesize[0] + x];
   
+  //BUG on first equation
   avgLuma = luma*1.0 / ((height*width)/((N+M)/2));
+  //avgLuma = luma*1.0 / ((height/N)*(width/M));
   
   //Insert every frame into a bidimensional array
   fullArray[iFrame] = (int)(avgLuma*100);
@@ -827,7 +841,7 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
 
 static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
     //FIX: make info dynamic!
-	memset((char *)info, 0, 50000);
+	memset((char *)info, 0, 500000);
     int i;
     for(i=0; i<argc; i++){
       //printf("%s = %s\n", azColName[i], argv[i] ? argv[i]: "NULL");
@@ -856,21 +870,21 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
   int avgLuma = 0;
   int thresh = threshold * 100;
   int retval = 0;
-  char insert_query[50000];
-  char select_query[50000];
-  char info[50000];
-  char newinfo[50000];
+  char insert_query[500000];
+  char select_query[500000];
+  char info[500000];
+  char newinfo[500000];
   char mid[50];
   int counter = 1;
   
-  memset(info, 0, 50000);
-  memset(newinfo, 0, 50000);
-  memset(insert_query, 0, 50000);
-  memset(select_query, 0, 50000);
+  memset(info, 0, 500000);
+  memset(newinfo, 0, 500000);
+  memset(insert_query, 0, 500000);
+  memset(select_query, 0, 500000);
   memset(mid, 0, 50);
   
   //Get movie id
-  memset(select_query, 0, 50000);
+  memset(select_query, 0, 500000);
   sprintf(select_query, "select allmovieskey from allmovies where name = \"%s\"", filename );
   retval = sqlite3_exec(handle,select_query,sqlite_mid_callback,mid,NULL);
 	  
@@ -892,7 +906,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	if ( (shortArray[aux] < (first-thresh) || shortArray[aux] > (first+thresh)) ) {
 	  
 	  //Update the movie database
-      memset(insert_query, 0, 50000);
+      memset(insert_query, 0, 500000);
       sprintf(insert_query, "insert into '%s' values (%f,%d)",filename,aux/fps,first);
       retval = sqlite3_exec(handle,insert_query,0,0,0);
 	  
@@ -900,7 +914,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	    printf("%s\n",sqlite3_errmsg(handle));
 			  
 	  //Get previous hash info
-	  memset(select_query, 0, 50000);
+	  memset(select_query, 0, 500000);
 	  sprintf(select_query, "select movies from hashluma where avg_range = \"%d\"", first/100);
 	  retval = sqlite3_exec(handle,select_query,sqlite_makeindexes_callback,info,NULL);
 
@@ -909,7 +923,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 		
 	  //Update the hashtable
 	  //FIX: make newinfo dynamic!
-	  memset(newinfo, 0, 50000);
+	  memset(newinfo, 0, 500000);
 	  sprintf(newinfo, "%s%s:%f-%f,", info, mid, prev, aux/fps);
 	  //printf("%s\n", newinfo);
 	  
@@ -931,7 +945,7 @@ int makeIndexes(int *shortArray, sqlite3* handle, char *filename, int threshold,
 	  counter++;
   }
   // Last entry
-  memset(insert_query, 0, 500);
+  memset(insert_query, 0, 500000);
   sprintf(insert_query, "insert into '%s' values (%f,%d)",filename,aux/fps,-1);
   retval = sqlite3_exec(handle,insert_query,0,0,0);
   
