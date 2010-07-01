@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1],"-") == 0) {
 	  inputsource = "/dev/stdin";
 	  if (argv[2] == NULL) {
-	    printf("Please input a DB name for the movie!\n");
+	    printf("Please input a name for the movie!\n");
 		return -1;
 	  } else {
 	    if (strrchr(argv[2],'/') == NULL)
@@ -58,19 +58,26 @@ int main(int argc, char *argv[]) {
 	  }
 	} else {
 	  filename = argv[1];
+	
+	  if (argv[2] != NULL && argc == 3) {
+        outputDB = argv[2];
+      } else {
+        outputDB = "/tmp/videofingerprint.db";
+      }
 	}
   } else {
 	filename = strrchr(argv[1],'/') + 1;
+	if (argv[3] != NULL && argc == 4) {
+	  outputDB = argv[3];
+    } else {
+      outputDB = "/tmp/videofingerprint.db";
+    }
   }
   inputsource = argv[1];
   
-  if (argv[3] != NULL) {
-    outputDB = argv[3];
-  } else {
-    outputDB = "/tmp/videofingerprint.db";
-  }
+
   
-  printf("Filename = %s Input source = %s DB output = %s\n",filename,inputsource,outputDB);
+  printf("Filename = %s Input source = %s DB output = %s argc = %d\n",filename,inputsource,outputDB, argc);
 
   /*** DB initialization ***/
   int retval = 0;
