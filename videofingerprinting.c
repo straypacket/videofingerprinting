@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
 	  }
 	} else {
 	  filename = argv[1];
+	  inputsource = argv[1];
 	
 	  if (argv[2] != NULL && argc == 3) {
         outputDB = argv[2];
@@ -74,15 +75,14 @@ int main(int argc, char *argv[]) {
 	}
   } else {
 	filename = strrchr(argv[1],'/') + 1;
+	inputsource = argv[1];
+	
 	if (argv[3] != NULL && argc == 4) {
 	  outputDB = argv[3];
     } else {
       outputDB = "/tmp/videofingerprint.db";
     }
   }
-  inputsource = argv[1];
-  
-
   
   printf("Filename = %s Input source = %s DB output = %s argc = %d\n",filename,inputsource,outputDB, argc);
 
