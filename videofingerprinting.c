@@ -55,13 +55,14 @@ int main(int argc, char *argv[]) {
 		  filename = argv[2];
 		} else {
 		  filename = strrchr(argv[2],'/') + 1;
-		  
-		  if (argv[3] != NULL && argc == 4) {
-	        outputDB = argv[3];
-          } else {
-            outputDB = "/tmp/videofingerprint.db";
-          }
 		}
+		  
+		if (argv[3] != NULL && argc == 4) {
+	      outputDB = argv[3];
+        } else {
+          outputDB = "/tmp/videofingerprint.db";
+        }
+		
 	  }
 	} else {
 	  filename = argv[1];
