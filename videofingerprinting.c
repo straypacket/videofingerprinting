@@ -107,6 +107,22 @@ int main(int argc, char *argv[]) {
   char query3[] = "PRAGMA synchronous = OFF";
   retval = sqlite3_exec(handle,query3,0,0,0);
   
+  //Hashluma table
+  char query_hash[] = "create table hashluma (avg_range int, movies TEXT)";
+  retval = sqlite3_exec(handle,query_hash,0,0,0);
+  
+  if (!retval) {
+    //Populating the hash tables
+	printf("Populating hashluma table\n");
+    char hashquery[50];
+    memset(hashquery, 0, 50);
+    int i = 0;
+    for(i=0; i <= 254; i++) {
+	  sprintf(hashquery, "insert into hashluma (avg_range) values (%d)", i);
+	  retval = sqlite3_exec(handle,hashquery,0,0,0);
+    }
+  }
+  
   char table_query[150];
   memset(table_query, 0, 150);
   sprintf(table_query,"create table '%s' (s_end FLOAT, luma INTEGER);",filename);
