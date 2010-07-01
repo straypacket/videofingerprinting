@@ -51,10 +51,17 @@ int main(int argc, char *argv[]) {
 	    printf("Please input a name for the movie!\n");
 		return -1;
 	  } else {
-	    if (strrchr(argv[2],'/') == NULL)
+	    if (strrchr(argv[2],'/') == NULL) {
 		  filename = argv[2];
-		else
+		} else {
 		  filename = strrchr(argv[2],'/') + 1;
+		  
+		  if (argv[3] != NULL && argc == 4) {
+	        outputDB = argv[3];
+          } else {
+            outputDB = "/tmp/videofingerprint.db";
+          }
+		}
 	  }
 	} else {
 	  filename = argv[1];
