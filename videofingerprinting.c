@@ -12,7 +12,7 @@ Static
 gcc -o videofingerprinting videofringerprinting.c -static -lsqlite3 -lavformat -lavcodec -lswscale -lavutil -lpthread -lbz2 -lfaac -lfaad -lmp3lame -lvorbisenc -lvorbis -logg -lx264 -lxvidcore -lz -lm -lc -Wall -m32
 *
 To run:
-./videofingerprint <sqlite_file.db> <{path/to/}video.mp4> || - <filename> >
+./videofingerprint <{path/to/}video.mp4> || - <filename> >  <sqlite_file.db>
 Where commands inside {} are facultative and || denotes either the left or right part needs to be input
 ******/
 #include <libavcodec/avcodec.h>
