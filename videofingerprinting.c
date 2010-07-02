@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 	if (argv[3] != NULL && argc == 4) {
 	  outputDB = argv[3];
     } else {
-      outputDB = "/tmp/videofingerprint.db";
+      outputDB = "/var/local/videofingerprint.db";
     }
   }
   
