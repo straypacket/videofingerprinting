@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 	return -1;
   }
   
-  char query1[] = "create table allmovies (allmovieskey INTEGER PRIMARY KEY,name TEXT,fps INTEGER);";
+  char query1[] = "create table allmovies (allmovieskey INTEGER PRIMARY KEY,name TEXT,fps INTEGER, date INTEGER);";
   // Execute the query for creating the table
   retval = sqlite3_exec(handle,query1,0,0,0);
   char query2[] = "PRAGMA count_changes = OFF";
@@ -135,14 +135,17 @@ int main(int argc, char *argv[]) {
   memset(table_query, 0, 150);
   sprintf(table_query,"create table '%s' (s_end FLOAT, luma INTEGER);",filename);
   
+  int repeated = 0;
+  
   retval = sqlite3_exec(handle,table_query,0,0,0);
   if (retval) {
 	char error [100];
 	memset(error, 0, 100);
-	sprintf(error,"Table for movie %s already exists!\n",filename);
+	sprintf(error,"Table for movie %s already exists! Fingerprinting anyways ... \n",filename);
 	printf("%s",error);
-	sqlite3_close(handle);
-	return -1;
+	repeated = 1;
+	//sqlite3_close(handle);
+	//return -1;
   }
   /*** DB init finished ***/
 
@@ -229,11 +232,17 @@ int main(int argc, char *argv[]) {
   av_init_packet(&packet);
   struct SwsContext * sws_context;
   double fps = 0.0;
+  
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
 
   char allmovies_query[150];
   memset(allmovies_query, 0, 150);
   fps = (double)pFormatCtx->streams[videoStream]->r_frame_rate.num/(double)pFormatCtx->streams[videoStream]->r_frame_rate.den;
-  sprintf(allmovies_query, "insert into allmovies (name,fps) values ('%s',%d);", filename, (int)(fps*100));
+  //if (repeated)
+  //  sprintf(allmovies_query, "insert into allmovies (name,fps,date) values ('%s_%d',%d,%d);", filename, (int)tv.tv_sec, (int)(fps*100), (int)tv.tv_sec);
+  //else
+    sprintf(allmovies_query, "insert into allmovies (name,fps,date) values ('%s',%d,%d);", filename, (int)(fps*100), (int)tv.tv_sec);
   retval = sqlite3_exec(handle,allmovies_query,0,0,0);
   
   i=0;
