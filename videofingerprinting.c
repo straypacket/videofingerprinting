@@ -12,7 +12,7 @@ Static
 gcc -o videofingerprinting videofringerprinting.c -static -lsqlite3 -lavformat -lavcodec -lswscale -lavutil -lpthread -lbz2 -lfaac -lfaad -lmp3lame -lvorbisenc -lvorbis -logg -lx264 -lxvidcore -lz -lm -lc -Wall -m32
 *
 To run:
-./videofingerprint <{path/to/}video.mp4> || - <filename> >  <sqlite_file.db>
+./videofingerprint <{path/to/}video.mp4> || - <filename> >cd <sqlite_file.db>
 Where commands inside {} are facultative and || denotes either the left or right part needs to be input
 ******/
 #include <libavcodec/avcodec.h>
@@ -40,6 +40,7 @@ int threshold = 5;
 int main(int argc, char *argv[]) {
   
   char *filename = NULL;
+  char *filename_suffix = NULL;
   char *inputsource = NULL;
   char *outputDB = NULL;
   
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
 		if (argv[3] != NULL && argc == 4) {
 	      outputDB = argv[3];
         } else {
-          outputDB = "/tmp/videofingerprint.db";
+          outputDB = "/home/skillup/videofingerprint.db";
         }
 		
 	  }
@@ -71,7 +72,7 @@ int main(int argc, char *argv[]) {
 	  if (argv[2] != NULL && argc == 3) {
         outputDB = argv[2];
       } else {
-        outputDB = "/tmp/videofingerprint.db";
+        outputDB = "/home/skillup/videofingerprint.db";
       }
 	}
   } else {
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]) {
 	if (argv[3] != NULL && argc == 4) {
 	  outputDB = argv[3];
     } else {
-      outputDB = "/var/local/videofingerprint.db";
+      outputDB = "/home/skillup/videofingerprint.db";
     }
   }
   
@@ -141,11 +142,12 @@ int main(int argc, char *argv[]) {
   if (retval) {
 	char error [100];
 	memset(error, 0, 100);
-	sprintf(error,"Table for movie %s already exists! Fingerprinting anyways ... \n",filename);
+	sprintf(error,"Table for movie %s already exists! Skipping fingerprinting ... \n",filename);
 	printf("%s",error);
+	//Decide which is the best policy, not FP? overwrite? new file?
 	repeated = 1;
-	//sqlite3_close(handle);
-	//return -1;
+	sqlite3_close(handle);
+	return 0;
   }
   /*** DB init finished ***/
 
@@ -239,11 +241,14 @@ int main(int argc, char *argv[]) {
   char allmovies_query[150];
   memset(allmovies_query, 0, 150);
   fps = (double)pFormatCtx->streams[videoStream]->r_frame_rate.num/(double)pFormatCtx->streams[videoStream]->r_frame_rate.den;
-  //if (repeated)
-  //  sprintf(allmovies_query, "insert into allmovies (name,fps,date) values ('%s_%d',%d,%d);", filename, (int)tv.tv_sec, (int)(fps*100), (int)tv.tv_sec);
-  //else
+  //if (repeated) {
+  //  filename_suffix = (int)tv.tv_sec;
+  //  sprintf(filename, "%s_%d", filename, filename_suffix);
+  //  sprintf(allmovies_query, "insert into allmovies (name,fps,date) values ('%s',%d,%d);", filename, (int)(fps*100), filename_suffix);
+  //} else {
     sprintf(allmovies_query, "insert into allmovies (name,fps,date) values ('%s',%d,%d);", filename, (int)(fps*100), (int)tv.tv_sec);
-  retval = sqlite3_exec(handle,allmovies_query,0,0,0);
+  //}
+	retval = sqlite3_exec(handle,allmovies_query,0,0,0);
   
   i=0;
   while(av_read_frame(pFormatCtx, &packet)>=0) {
@@ -302,7 +307,6 @@ int main(int argc, char *argv[]) {
   free(shortArray);
 
   return 0;
-  
 }
 
 int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3* handle, double fps, int *fullArray) {
@@ -331,7 +335,6 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
   
   prevY = avgLuma;
   
-  return 0;
 };
 
 static int sqlite_makeindexes_callback(void *info, int argc, char **argv, char **azColName){
