@@ -5,7 +5,7 @@ http://www.dranger.com/ffmpeg/tutorial01.html
 *
 To compile:
 Linux
-gcc -o nfe nframe_extractor.c -static -lavutil -lavformat -lavcodec -lz -lm -Wall
+gcc -o nfe nframe_extractor.c -lavutil -lavformat -lavcodec -lz -lm -Wall
 OSX
 gcc -o nfe nframe_extractor.c -I/opt/local/include -L/opt/local/lib -lavutil -lavformat -lavcodec -lz -lm -Wall
 Static
@@ -16,12 +16,15 @@ To run:
 ******/
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
 #include <sys/time.h>
 #include <string.h>
 
 int main(int argc, char *argv[]) {
   
+  if (argv[1]==NULL) {
+    printf("Please input a file name:\n %s file_to_analyze\n", argv[0]);
+    return -1; // No file specified
+  }
   char *inputsource = argv[1];
 
   av_register_all();
@@ -94,25 +97,33 @@ int main(int argc, char *argv[]) {
   // of AVPicture
   avpicture_fill((AVPicture *)pFrameYUV, buffer, PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height);
   
-  int frameFinished = 0;
   AVPacket packet;
   av_init_packet(&packet);
 
   int nFrames = 0;
   while(av_read_frame(pFormatCtx, &packet)>=0) {
   // Is this a packet from the video stream?
-    if(packet.stream_index==videoStream) {
-    // Decode video frame
-	  avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-      // Did we get a video frame?
-      if(frameFinished) {
-		nFrames++;
-
-      }
-    }
+    if(packet.stream_index==videoStream)
+		nFrames++;  
   }
   printf("%d\n", nFrames);
   nFrames = 0;
   
+  // Free the packet that was allocated by av_read_frame
+  av_free_packet(&packet);
+  
+  // Free the YUV image
+  av_free(buffer);
+  av_free(pFrameYUV);
+
+  // Free the YUV frame
+  av_free(pFrame);
+
+  // Close the codec
+  avcodec_close(pCodecCtx);
+
+  // Close the video file
+  av_close_input_file(pFormatCtx);
+
   return 0;
 }  
