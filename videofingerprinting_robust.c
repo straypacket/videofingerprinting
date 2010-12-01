@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 0) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_central.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_central.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 	}
   }  
   else if (mode == 4) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 14) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_cif.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_cif.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 24) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_fps.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_fps.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 34) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_brate.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_brate.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 44) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_qcif.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_qcif.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 54) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_5fps.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_5fps.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 64) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_grey.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_grey.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 71) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot1.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_rot1.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 72) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot2.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_rot2.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 73) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot3.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_rot3.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 75) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot5.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_rot5.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -265,7 +265,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 77) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_rot7.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_rot7.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");
@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   else if (mode == 80) {
-	retval = sqlite3_open("/home/gsc/test_suj_branch3_import_multi.db",&handle);
+	retval = sqlite3_open("/home/gsc/test_suj_import_multi.db",&handle);
 	// If connection failed, handle returns NULL
 	if(retval){
 		printf("Database connection failed\n");

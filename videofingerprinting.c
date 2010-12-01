@@ -5,14 +5,14 @@ http://www.dranger.com/ffmpeg/tutorial01.html
 *
 To compile:
 Linux
-gcc -o videofingerprinting videofringerprinting.c -static -lsqlite3 -lavutil -lavformat -lavcodec -lswscale -lz -lm -Wall
+gcc -o videofingerprinting videofringerprinting.c -lsqlite3 -lavutil -lavformat -lavcodec -lswscale -lz -lm -Wall
 OSX
 gcc -o videofingerprinting videofringerprinting.c -I/opt/local/include -L/opt/local/lib -lsqlite3 -lavutil -lavformat -lavcodec -lswscale -lz -lm -Wall
 Static
 gcc -o videofingerprinting videofringerprinting.c -static -lsqlite3 -lavformat -lavcodec -lswscale -lavutil -lpthread -lbz2 -lfaac -lfaad -lmp3lame -lvorbisenc -lvorbis -logg -lx264 -lxvidcore -lz -lm -lc -Wall -m32
 *
 To run:
-./videofingerprint <{path/to/}video.mp4> || - <filename> >cd <sqlite_file.db>
+./videofingerprint <{path/to/}video.mp4> || - <filename>> <sqlite_file.db>
 Where commands inside {} are facultative and || denotes either the left or right part needs to be input
 ******/
 #include <libavcodec/avcodec.h>
@@ -20,6 +20,7 @@ Where commands inside {} are facultative and || denotes either the left or right
 #include <libswscale/swscale.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 /** DB stuff **/
 #include<stdio.h>
@@ -28,6 +29,7 @@ Where commands inside {} are facultative and || denotes either the left or right
 
 #define PI 3.1415926535897932384
 int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3 *handle, double fps, int *fullArray);
+int AvgFullFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3 *handle, double fps, int *fullArray);
 static int sqlite_makeindexes_callback(void *newinfo, int argc, char **argv, char **azColName);
 static int sqlite_mid_callback(void *newinfo, int argc, char **argv, char **azColName);
 int makeIndexes(int *shortArray, sqlite3 *handle, char *filename, int threshold, int size, double fps);
@@ -35,12 +37,14 @@ int makeIndexes(int *shortArray, sqlite3 *handle, char *filename, int threshold,
 double prevY, prevU, prevV = 0.0;
 int split = -1;
 int split_second = 0;
-int threshold = 5;
+// ============
+// DB Threshold
+// ============
+int threshold = 1;
 
 int main(int argc, char *argv[]) {
   
   char *filename = NULL;
-  char *filename_suffix = NULL;
   char *inputsource = NULL;
   char *outputDB = NULL;
   
@@ -61,7 +65,7 @@ int main(int argc, char *argv[]) {
 		if (argv[3] != NULL && argc == 4) {
 	      outputDB = argv[3];
         } else {
-          outputDB = "/home/skillup/videofingerprint.db";
+          outputDB = "/home/gsc/videofingerprint.db";
         }
 		
 	  }
@@ -72,17 +76,17 @@ int main(int argc, char *argv[]) {
 	  if (argv[2] != NULL && argc == 3) {
         outputDB = argv[2];
       } else {
-        outputDB = "/home/skillup/videofingerprint.db";
+        outputDB = "/home/gsc/videofingerprint.db";
       }
 	}
   } else {
 	filename = strrchr(argv[1],'/') + 1;
 	inputsource = argv[1];
 	
-	if (argv[3] != NULL && argc == 4) {
-	  outputDB = argv[3];
+	if (argv[2] != NULL && argc == 3) {
+	  outputDB = argv[2];
     } else {
-      outputDB = "/home/skillup/videofingerprint.db";
+      outputDB = "/home/gsc/videofingerprint.db";
     }
   }
   
@@ -94,9 +98,9 @@ int main(int argc, char *argv[]) {
   // Create a handle for database connection, create a pointer to sqlite3
   sqlite3 *handle;
   
-  //Full array init of size 5h@60fps (a.k.a large enough)
+  //Full array init of size 30h@60fps (a.k.a large enough)
   //TO FIX: use dynamic array?
-  int *fullArray = (int*) calloc ( (1080000-1), sizeof (int));
+  int *fullArray = (int*) calloc ( (6480000-1), sizeof (int));
 
   // try to create the database. If it doesnt exist, it would be created
   // pass a pointer to the pointer to sqlite3, in short sqlite3**
@@ -232,7 +236,7 @@ int main(int argc, char *argv[]) {
   int frameFinished = 0;
   AVPacket packet;
   av_init_packet(&packet);
-  struct SwsContext * sws_context;
+  struct SwsContext* sws_context;
   double fps = 0.0;
   
   struct timeval tv;
@@ -250,6 +254,16 @@ int main(int argc, char *argv[]) {
   //}
 	retval = sqlite3_exec(handle,allmovies_query,0,0,0);
   
+  // Initialize context
+  //TO DO:
+  //sws_context->srcFormat = pCodecCtx->pix_fmt;
+  //sws_context->dstFormat = PIX_FMT_YUV420P;
+  //sws_context->srcW = pCodecCtx->width;
+  //sws_context->srcH = pCodecCtx->height;
+  //sws_context->dstW = pCodecCtx->width;
+  //sws_context->dstH = pCodecCtx->height;
+  //sws_context->flags = SWS_FAST_BILINEAR;
+		  
   i=0;
   while(av_read_frame(pFormatCtx, &packet)>=0) {
   // Is this a packet from the video stream?
@@ -262,10 +276,12 @@ int main(int argc, char *argv[]) {
       if(frameFinished) {
 	    if (pCodecCtx->pix_fmt != PIX_FMT_YUV420P) {
           // Convert the image from its native format to YUV (PIX_FMT_YUV420P)
-          //img_convert((AVPicture *)pFrameYUV, PIX_FMT_YUV420P, (AVPicture*)pFrame, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);
-		  sws_context = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
+		  // TO DO
+		  //sws_init_context(sws_context, NULL, NULL);
+ 		  sws_context = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
           
-		  sws_scale(sws_context, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data, pFrameYUV->linesize);
+		  sws_scale(sws_context, (const uint8_t * const*)pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data, pFrameYUV->linesize);
           sws_freeContext(sws_context);
 		  
 		  retval = AvgFrameImport(pFrameYUV, pCodecCtx->width, pCodecCtx->height, i++, filename, handle, fps, fullArray);
@@ -309,6 +325,32 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+int AvgFullFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3* handle, double fps, int *fullArray) {
+  int y = 0;
+  int x = 0;
+  
+  unsigned int luma = 0;
+  float avgLuma = 0.0;
+  
+  //printf("Averaging [%d][%d][%d][%d] of the original [0][0][%d][%d]\n", width/M, height/N,2*width/M ,2*height/N , width, height);
+  
+  for(y=0; y<height; y++)
+    for (x=0; x<width; x++)
+      luma += pFrameFoo->data[0][y*pFrameFoo->linesize[0] + x];
+  
+  avgLuma = luma*1.0 / (height*width);
+  //avgLuma = luma*1.0 / ((height/N)*(width/M));
+  
+  //Insert every frame into a bidimensional array
+  fullArray[iFrame] = (int)(avgLuma*100);
+  //printf("%d\n",(int)(avgLuma*100));
+  
+  prevY = avgLuma;
+  
+  return 0;
+  
+};
+
 int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *filename, sqlite3* handle, double fps, int *fullArray) {
   int y = 0;
   int x = 0;
@@ -326,14 +368,16 @@ int AvgFrameImport(AVFrame *pFrameFoo, int width, int height, int iFrame, char *
       luma += pFrameFoo->data[0][y*pFrameFoo->linesize[0] + x];
   
   //BUG on first equation
-  avgLuma = luma*1.0 / ((height*width)/((N+M)/2));
-  //avgLuma = luma*1.0 / ((height/N)*(width/M));
+  //avgLuma = luma*1.0 / ((height*width)/((N+M)/2));
+  avgLuma = luma*1.0 / ((height/N)*(width/M));
   
   //Insert every frame into a bidimensional array
   fullArray[iFrame] = (int)(avgLuma*100);
   //printf("%d\n",(int)(avgLuma*100));
   
   prevY = avgLuma;
+  
+  return 0;
   
 };
 
